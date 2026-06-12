@@ -1,316 +1,358 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fiszki – Egzamin I 2025</title>
-<style>
-  :root {
-    --bg: #0f1419;
-    --card: #1a2332;
-    --text: #e8edf4;
-    --muted: #8b9cb3;
-    --accent: #4f8cff;
-    --green: #3dd68c;
-    --blue: #6eb5ff;
-    --red: #ff6b6b;
-    --border: #2a3548;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: "Segoe UI", system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1.5rem;
-  }
-  header {
-    width: min(720px, 100%);
-    margin-bottom: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  h1 { font-size: 1.4rem; font-weight: 600; }
-  .progress { color: var(--muted); font-size: 0.95rem; }
-  .controls { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-  button {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.15s, border-color 0.15s;
-  }
-  button:hover { background: #243044; border-color: var(--accent); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  button.primary:hover { background: #3d7ae8; }
-  .scene {
-    width: min(720px, 100%);
-    perspective: 1200px;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 620px;
-  }
-  .card {
-    width: 100%;
-    min-height: 580px;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-  }
-  .card.flipped { transform: rotateY(180deg); }
-  .face {
-    position: absolute;
-    inset: 0;
-    backface-visibility: hidden;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-    overflow-y: auto;
-  }
-  .face.back { transform: rotateY(180deg); }
-  .q-num {
-    font-size: 0.8rem;
-    color: var(--accent);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .question { font-size: 1.1rem; line-height: 1.55; font-weight: 500; }
-  .options { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-  .options li {
-    padding: 0.65rem 0.9rem;
-    background: rgba(255,255,255,0.04);
-    border-radius: 8px;
-    line-height: 1.45;
-    font-size: 0.95rem;
-  }
-  .options li .letter {
-    font-weight: 700;
-    color: var(--accent);
-    margin-right: 0.4rem;
-  }
-  .label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-    margin-bottom: 0.25rem;
-  }
-  .correct-list { display: flex; flex-direction: column; gap: 0.75rem; }
-  .correct-item {
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    border-left: 4px solid var(--blue);
-    background: rgba(110,181,255,0.08);
-    line-height: 1.45;
-  }
-  .correct-item.pewniak {
-    border-left-color: var(--green);
-    background: rgba(61,214,140,0.1);
-  }
-  .correct-item .tag {
-    display: inline-block;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 0.15rem 0.45rem;
-    border-radius: 4px;
-    margin-bottom: 0.35rem;
-  }
-  .tag-blue { background: rgba(110,181,255,0.2); color: var(--blue); }
-  .tag-green { background: rgba(61,214,140,0.2); color: var(--green); }
-  .warning {
-    margin-top: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: rgba(255,107,107,0.1);
-    border: 1px solid rgba(255,107,107,0.3);
-    border-radius: 8px;
-    color: var(--red);
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-  .warning strong { display: block; margin-bottom: 0.25rem; }
-  .note {
-    font-size: 0.85rem;
-    color: var(--muted);
-    font-style: italic;
-    margin-top: auto;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border);
-  }
-  .empty-correct {
-    color: var(--muted);
-    font-style: italic;
-    padding: 1rem;
-    text-align: center;
-  }
-  .hint {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.85rem;
-    margin-top: 1rem;
-  }
-  .nav-bar {
-    width: min(720px, 100%);
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Quiz offline – krok po kroku</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+    .question { margin-bottom: 20px; }
+    .answers label { display: block; margin: 5px 0; padding: 5px; min-height: 24px; }
+    .correct { color: green; font-weight: bold; }
+    .wrong { color: red; font-weight: bold; }
+    .answer-correct { background-color: #d4edda; border-left: 4px solid #28a745; }
+    .answer-wrong { background-color: #f8d7da; border-left: 4px solid #dc3545; }
+    .answer-missed { background-color: #fff3cd; border-left: 4px solid #ffc107; }
+    .answer-neutral { border-left: 4px solid transparent; }
+    .answer-icon { display: inline-block; width: 24px; }
+    input[type="checkbox"] { margin-right: 5px; }
+    .correct-list { margin-top: 10px; }
+    .correct-list div { margin: 3px 0; }
+    .comments { font-size: 0.9em; color: #666; margin-top: 10px; }
+    button { margin: 10px 5px 0 0; }
+    .stats { margin-top: 20px; }
+    #time { font-size: 1.2em; font-weight: bold; }
+  </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>Egzamin I 2025 – Fiszki</h1>
-    <div class="progress" id="progress"></div>
-  </div>
-  <div class="controls">
-    <button id="shuffleBtn">Losuj kolejność</button>
-    <button id="resetBtn">Od początku</button>
-  </div>
-</header>
 
-<div class="scene">
-  <div class="card" id="card">
-    <div class="face front" id="front"></div>
-    <div class="face back" id="back"></div>
-  </div>
+<h1>Quiz offline</h1>
+<input type="file" id="fileInput" accept=".quiz,.txt"><br><br>
+<button id="shuffleBtn" style="display:none">🔀 Pomieszaj pytania</button>
+<button id="exportBtn" style="display:none">📄 Pobierz cały quiz jako .txt</button>
+
+<div id="stats" class="stats">
+  <div>Poprawne: <span id="correctCount">0</span></div>
+  <div>Niepoprawne: <span id="incorrectCount">0</span></div>
+  <div>Wszystkie: <span id="totalCount">0</span></div>
+  <div>Czas: <span id="time">00:00:00</span></div>
 </div>
 
-<div class="nav-bar">
-  <button id="prevBtn">← Poprzednia</button>
-  <button class="primary" id="flipBtn">Odwróć</button>
-  <button id="nextBtn">Następna →</button>
-</div>
-<p class="hint">Kliknij kartę lub naciśnij spację, aby odwrócić · Strzałki ← → do nawigacji</p>
+<div id="quizContainer"></div>
+<button id="nextBtn" style="display:none">Następne pytanie</button>
+<button id="downloadBtn" style="display:none">📥 Pobierz pytania, które zrobiłeś źle</button>
 
 <script>
-const CARDS = [{"id": 1, "question": "System czasu rzeczywistego: 0,5 pkt za b) więc 4 odpowedzi poprawne", "options": [{"letter": "a", "text": "to system, w którym wynik przetwarzania zalezy nie tylko od uwarunkowań logicznych programu, ale takze chwili, w której wynik taki się pojawi"}, {"letter": "b", "text": "to system, w którym obliczenia są wykonywane równolegle z przebiegiem zewnętrznego procesu i mają one za zadanie nadzorowanie, sterowanie, komunikowanie się lub terminowe reagowanie na zachodzące w systemie zdarzenia"}, {"letter": "c", "text": "to system, w którym pomiędzy jego elementami procesami w nim występującymi zachodzą relacje uwarunkowane zdarzeniowo i czasowo"}, {"letter": "d", "text": "to także system operacyjny czasu rzeczywistego"}], "correct": ["a", "b", "c", "d"], "certain_wrong": [], "pewniaki": [], "notes": ""}, {"id": 2, "question": "Sieci fieldbus to", "options": [{"letter": "a", "text": "sieci o relatywnie niewielkim zasięgu geograficznym"}, {"letter": "b", "text": "sieci o relatywnie niewielkiej liczbie urządzeń sieciowych"}, {"letter": "c", "text": "sieci o relatywnie niskiej prędkości transmisji"}, {"letter": "d", "text": "sieci o dwukierunkowej transmisji danych"}, {"letter": "e", "text": "sieci o bardzo wysokim poziomie bezpieczeństwa przekazywanych danych"}], "correct": ["a", "b", "c", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": "1,2 pkt za a, c i d, więc jest 5 poprawnych"}, {"id": 3, "question": "Siecią, w której może wystąpić tylko jedna jednostka typu master jest", "options": [{"letter": "a", "text": "AS-i"}, {"letter": "b", "text": "Modbus"}, {"letter": "c", "text": "Profibus"}, {"letter": "d", "text": "CAN"}, {"letter": "e", "text": "HART"}], "correct": ["a", "b"], "certain_wrong": [], "pewniaki": [], "notes": "2 pkt za a) b)"}, {"id": 4, "question": "Siecią, w której mogą wystąpić więcej niż jedna jednostka typu master jest", "options": [{"letter": "a", "text": "AS-1"}, {"letter": "b", "text": "Modbus"}, {"letter": "c", "text": "Profibus"}, {"letter": "d", "text": "CAN"}, {"letter": "e", "text": "HART"}], "correct": ["c", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": "2 pkt za c), d), e)"}, {"id": 5, "question": "Topologia pierścienia jest rzadko stosowana, i nie jest stosowana w sieciach.", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i"}, {"letter": "d", "text": "DP ze światłowodową warstwą fizyczną"}, {"letter": "e", "text": "HART"}], "correct": ["a", "b", "e"], "certain_wrong": [], "pewniaki": ["a", "b", "e"], "notes": "Uwaga z egzaminu: zaznaczenie a) b) d) e) wyzerowało zadanie"}, {"id": 6, "question": "Sieć HART", "options": [{"letter": "a", "text": "jest siecią o stalej, niekonfigurowalne prędkości transmisji"}, {"letter": "b", "text": "jest siecią, w której w warstwie fizycznej stosowana jest modulacja częstotliwości"}, {"letter": "c", "text": "jest siecia multimaster"}, {"letter": "d", "text": "jest siecią dwuprzewodową"}, {"letter": "e", "text": "wymaga zawsze specjalnego zasilacza HART"}], "correct": ["a", "b", "c", "d"], "certain_wrong": [], "pewniaki": [], "notes": "2 pkt za a,b,c i d"}, {"id": 7, "question": "Sieć AS-i", "options": [{"letter": "a", "text": "jest siecią o stalej, niekonfigurowalnej prędkości transmisji"}, {"letter": "b", "text": "znajduje zastosowanie w procesach wytwórczych, w ktorych występuje zagrozenie wybuchem"}, {"letter": "c", "text": "dopuszcza występowanie maksymalnie dwóch jednostek typu master"}, {"letter": "d", "text": "jest siecia dwuprzewodową"}, {"letter": "e", "text": "wymaga zawsze specjalnego zasilacza AS-i"}], "correct": ["a", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": "2pkt za a)d)e)"}, {"id": 8, "question": "Sieć PROFIBUS PA:", "options": [{"letter": "a", "text": "jest siecią o stałej, niekonfigurowalnej prędkości transmisji"}, {"letter": "b", "text": "znajduje zastosowanie w procesach wytwórczych, w których występuje zagrożenie wybuchem"}, {"letter": "c", "text": "jest siecią multimaster"}, {"letter": "d", "text": "nie ma własnej jednostki typu master"}, {"letter": "e", "text": "jest siecią czteroprzewodową"}], "correct": ["a", "c"], "certain_wrong": [], "pewniaki": ["b", "d"], "notes": "1 pkt za a) i c)"}, {"id": 9, "question": "Sieć PROFIBUS DP - za a) i c) dostałem 2 pkt, więc tylko one są poprawne", "options": [{"letter": "a", "text": "znajduje zastosowanie w automatyzacji maszyn i obrabiarek"}, {"letter": "b", "text": "znajduje zastosowanie w procesach wytwórczych, w których występuje zagrozenie wybuchem"}, {"letter": "c", "text": "znajduje zastosowanie w warstwie obiektowej i warstwie sterowania"}, {"letter": "d", "text": "znajduje wyłącznie zastosowanie w warstwie operatorskiej automatyzacji"}], "correct": ["a", "c"], "certain_wrong": [], "pewniaki": [], "notes": ""}, {"id": 10, "question": "Warstwa fizyczna w PROFIBUS DP:", "options": [{"letter": "a", "text": "może być realizowana w postaci światłowodu"}, {"letter": "b", "text": "może być realizowana zgodnie ze standardem RS485"}, {"letter": "c", "text": "może być realizowana zgodnie ze standardem RS232"}, {"letter": "d", "text": "może być realizowana zgodnie ze standardern RS422"}, {"letter": "e", "text": "może być realizowana zgodnie ze standardem Ehernet"}], "correct": ["a", "b"], "certain_wrong": [], "pewniaki": ["a", "b"], "notes": ""}, {"id": 11, "question": "Warstwa fizyczna w sieci Modbus:", "options": [{"letter": "a", "text": "może być realizowana zgodnie ze standardem RS485"}, {"letter": "b", "text": "moze być realizowana zgodnie ze standardem RS232"}, {"letter": "c", "text": "moze być realizowana zgodnie ze standardem Ethernet"}, {"letter": "d", "text": "może być realizowana w postaci światłowodu"}], "correct": ["a", "b", "c", "d"], "certain_wrong": [], "pewniaki": [], "notes": ""}, {"id": 12, "question": "Jednoczesne przesyłanie informacji w formie analogowej I cyfrowej w sieci dwuprzewodowej jest:", "options": [{"letter": "a", "text": "technicznie niemożliwe i) wykorzystywane w sieci Profibus PA"}, {"letter": "b", "text": "wykorzystywane w sieci HART -> jedyna poprawna odpowiedź tutaj"}, {"letter": "c", "text": "wykorzystywane w sieci Modbus"}, {"letter": "d", "text": "wykorzystywane w sieci Foundation Fieldbus H1"}], "correct": ["b"], "certain_wrong": [], "pewniaki": [], "notes": ""}, {"id": 13, "question": "Topologia siatki nie może być stosowana w sieci", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i"}, {"letter": "d", "text": "PROFIBUS DP"}, {"letter": "e", "text": "HART"}], "correct": ["a", "b", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": ""}, {"id": 14, "question": "Topologia drzewa może być stosowana w sieci", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i -> za to dostałem 0,4pkt, więc podejrzewam, że wszystkie są poprawne"}, {"letter": "d", "text": "PROFIBUS DP"}, {"letter": "e", "text": "HART"}], "correct": ["a", "b", "c", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": ""}, {"id": 15, "question": "Która warstwa modelu ISO/OSI nie jest specyficzna (unikalna) tylko dla jednego typu sieci?", "options": [{"letter": "a", "text": "fizyczna"}, {"letter": "b", "text": "(łącza) danych"}, {"letter": "c", "text": "transportowa"}, {"letter": "d", "text": "prezentacyjna"}, {"letter": "e", "text": "aplikacyjna"}], "correct": ["a"], "certain_wrong": [], "pewniaki": [], "notes": ""}, {"id": 16, "question": "W urządzeniach sieci Modbus - za a) i e) było 1 ⅓ punkta, więc jeszcze jedna poprawna.", "options": [{"letter": "a", "text": "adresy są numeryczne"}, {"letter": "b", "text": "adresy sa symboliczne"}, {"letter": "c", "text": "jednostka klient nie ma adresu"}, {"letter": "d", "text": "urządzenia nie mają adresow"}, {"letter": "e", "text": "kazde urządzenie podporządkowane musi mieć unikalny wiasny adres"}], "correct": ["a", "c", "e"], "certain_wrong": [], "pewniaki": ["c"], "notes": ""}, {"id": 17, "question": "W sieci Modbus atrybut RW (read/write) danych", "options": [{"letter": "a", "text": "nie występuje"}, {"letter": "b", "text": "dotyczy tylko tych danych, które przechowywane są w strukturach odzwierciedlających stan wejść procesowych"}, {"letter": "c", "text": "dotyczy tylko tych danych, które przechowywane są w strukturach odzwierciedlających stan wyjść procesowych"}, {"letter": "d", "text": "dotyczy danych, które są przechowywane zarówno w strukturach odzwierciedlających stan wyjść jak i wyjść procesowych -> jedyna zaznaczona przeze mnie i wyzerowała punkty"}], "correct": ["c"], "certain_wrong": ["d"], "pewniaki": [], "notes": "d) wyzerowało punkty"}, {"id": 18, "question": "Model komunikacyjny typu klient-serwer -", "options": [{"letter": "a", "text": "może w pewnych warunkach być tożsamy z modelem monomaster"}, {"letter": "b", "text": "może posiadać byb rozgłoszeniowy"}, {"letter": "c", "text": "nie wymaga zawsze odpowiedzi jednostki serwer na zadanie jednostki klient"}, {"letter": "d", "text": "klient to inaczej slave, serwer to inaczej master"}], "correct": ["a", "b", "c"], "certain_wrong": [], "pewniaki": [], "notes": "2pkt za a) b) c)"}, {"id": 19, "question": "Determinizm sieci komunikacyjnej to", "options": [{"letter": "a", "text": "cecha określająca nieprzerywalność (integralność czasową) procesu komunikacji"}, {"letter": "b", "text": "cecha, która nie ma żadnej konotacji w odniesieniu do sieci typu fieldbus"}, {"letter": "c", "text": "cecha określająca zdolność do realizacji transakcji sieciowej w przewidywalnym przedziale czasowym -> jedyna poprawna"}, {"letter": "d", "text": "cecha opisująca mechanizm wywłaszczania procesów komunikacyjnych"}, {"letter": "e", "text": "cecha opisująca zdolność systemu sieciowego do detekcji błędów transmisji"}], "correct": ["c"], "certain_wrong": [], "pewniaki": [], "notes": "2 punkty za c)"}, {"id": 20, "question": "Arbitraz", "options": [{"letter": "a", "text": "nie jest konieczny w przypadku systemów sieciowych o profilu master-slave"}, {"letter": "b", "text": "jest zawsze konieczny w przypadku wszystkich systemów sieciowych o profilu multimaster <- wyzerowało mi punkty"}, {"letter": "c", "text": "jest mechanizmem rozwiązywania kolizji sieciowych"}, {"letter": "d", "text": "jego zastosowanie zapobiega występowaniu kolizji sieciowych"}], "correct": ["a", "c"], "certain_wrong": ["b"], "pewniaki": ["a"], "notes": "1 pkt za c)"}, {"id": 21, "question": "Które z sieci nie mogą być stosowane w strefach przemysłowych zagrożonych wybuchem.", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i"}, {"letter": "d", "text": "PROFIBUS DP"}, {"letter": "e", "text": "HART"}], "correct": ["a", "b", "c", "d"], "certain_wrong": [], "pewniaki": ["a", "c", "d"], "notes": "0,5 pkt za b), więc są 4 poprawne odpowiedzi"}, {"id": 22, "question": "Które z siec nie sa deterministyczne?", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i"}, {"letter": "d", "text": "PROFIBUS DP"}, {"letter": "e", "text": "HART"}], "correct": [], "certain_wrong": [], "pewniaki": [], "notes": "2 pkt za niezaznaczenie niczego – żadna odpowiedź nie jest poprawna"}, {"id": 23, "question": "W jakich sieciach nie jest konieczny arbitraż", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i"}, {"letter": "d", "text": "PROFIBUS DP"}, {"letter": "e", "text": "HART"}], "correct": ["a", "c", "d", "e"], "certain_wrong": [], "pewniaki": ["d"], "notes": "za a) c) i e) było 1.5 pkt, więc są 4 poprawne odpowiedzi"}, {"id": 24, "question": "W jakich sieciach wzajemne zwarcie przewodów sygnałowych nie powoduje uszkodzenia urządzeń komunikacyjnych ?", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i"}, {"letter": "d", "text": "PROFIBUS DP"}, {"letter": "e", "text": "HART"}], "correct": ["a", "b", "c", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": "0,4 pkt za e), więc jest 5 poprawnych, więc wszystkie odpowiedzi poprawne"}, {"id": 25, "question": "W jakich sieciach prędkość komunikacji można ustawiać różne prędkości transmisji?", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "HART"}, {"letter": "d", "text": "PROFIBUS DP"}], "correct": ["a", "b", "d"], "certain_wrong": [], "pewniaki": ["d"], "notes": "za"}, {"id": 26, "question": "Po jakim maksymalnym czasie jednostka typu master w sieci o profilu master-slave przygotowana do współpracy z 5 urzadzeniami podporządkowanymi (slave) zdiagnozuje, że istnieje wysokie prawdopodobieństwo, że nie zostało dołączone do sieci ani jedno z urządzeń podporządkowanych, jeśli wartość parametru timeout= 0.15, a jednostka master stosuje adresowanie urządzeń sekwencyjnie tzn. tak jak jednostka w sieci AS-I. Czas trwania ramki mastera wynosi 0,15: Skoro E zeruje, to nie ma żanej poprawnej", "options": [{"letter": "a", "text": "praktycznie natychmiast tzn. w czasie ok. 0s"}, {"letter": "b", "text": "ok 01 s"}, {"letter": "c", "text": "ok 0.25"}, {"letter": "d", "text": "ok 0,3 s"}, {"letter": "e", "text": "ok 1.0 s -> wyzerowało"}], "correct": [], "certain_wrong": ["e"], "pewniaki": [], "notes": "E wyzerowało – brak poprawnej odpowiedzi"}, {"id": 27, "question": "Monter dokonal blędnego dołączenia przewodów sygnałowych enkodera do sieci CAN (zamienil je).", "options": [{"letter": "a", "text": "mimo to urządzenie będzie działać poprawnie w sieci"}, {"letter": "b", "text": "urządzenie sparaliżuje ruch komunikacyjny w całej sieci, ale tylko wtedy gdy będzie w stanie nadawania"}, {"letter": "c", "text": "enkoder nie będzie mógł dokonywać pomiarów -> wyzerowało"}, {"letter": "d", "text": "spowoduje to uszkodzenie enkodera"}], "correct": ["b"], "certain_wrong": ["c"], "pewniaki": ["b"], "notes": ""}, {"id": 28, "question": "Ten sam mistrz techniki dokonal podobnej pomylki (zamiany przewodów) w trakcie przyłączenia modulu typu 40 do sieci AS-i", "options": [{"letter": "a", "text": "mimo to urządzenie będzie działać poprawnie w sieci"}, {"letter": "b", "text": "urządzenie sparalizuje ruch komunikacyjny w calej sieci, ale tylko wtedy gdy będzie w stanie nadawani"}, {"letter": "c", "text": "modul 40 nie będzie mógł poprawnie odpowiadać na zapytania mastera."}, {"letter": "d", "text": "spowoduje to uszkodzenie modulu 40"}], "correct": ["b", "c"], "certain_wrong": [], "pewniaki": ["b"], "notes": "1pkt za c)"}, {"id": 29, "question": "Pod koniec zmiany zmęczony monter dokonal nieświadomie w sieci PROFIBUS DP zwarcia przewodów sygnałowych na zaciskach przetwornika ciśnienia. Zorientował się, że coś jest nie w porządku, ale dopiero następnego dnia. Zwarcie spowodowało:", "options": [{"letter": "a", "text": "uszkodzenie tranceivera przetwornika -> wyzerowało."}, {"letter": "b", "text": "uszkodzenia tranceiverów wielu pozostałych urządzeń slave tej samej sieci"}, {"letter": "c", "text": "nie wywołało zadnych uszkodzeń urządzeń"}, {"letter": "d", "text": "paraliz komunikacyjny slec"}], "correct": ["d"], "certain_wrong": ["a"], "pewniaki": ["d"], "notes": ""}, {"id": 30, "question": "Beztroski stażysta wiedziony imperatywem poznawczym dołączył do sieci Profibus PA urządzenie sieci Profibus DP. Efektem bylo:", "options": [{"letter": "a", "text": "uszkodzenie urządzenia sieci Profibus PA"}, {"letter": "b", "text": "uszkodzenie obu urządzeń"}, {"letter": "c", "text": "nie wywolało żadnych uszkodzeń urządzeń -> jedyne poprawne"}, {"letter": "d", "text": "paraliz komunikacyjny sieci"}], "correct": ["c"], "certain_wrong": [], "pewniaki": [], "notes": "2 pkt za to zadanie"}, {"id": 31, "question": "W protokole Modbus RTU długość pola danych", "options": [{"letter": "a", "text": "może być równa 0"}, {"letter": "b", "text": "może wynosić 256 bajtów"}, {"letter": "c", "text": "może wynosić od 1 do 247 bajtów"}, {"letter": "d", "text": "jest praktycznie nieograniczona"}], "correct": ["a", "c"], "certain_wrong": [], "pewniaki": [], "notes": "2 pkt za to zadanie,"}, {"id": 32, "question": "W protokole CAN", "options": [{"letter": "a", "text": "dlugość pola danych może być równa 0"}, {"letter": "b", "text": "długość pola danych może wynosić dowolną liczbę bitów z zakresu 0.64"}, {"letter": "c", "text": "stosowane jest technika modulacji typu bil stuffing"}, {"letter": "d", "text": "cykliczna redundancyjna suma kontrolna jest zredukowana do kontrolnego bitu parzystości"}], "correct": ["a", "c"], "certain_wrong": ["b"], "pewniaki": ["a", "c"], "notes": "0pkt za a) b) c)"}, {"id": 33, "question": "Ramka odpowiedzi węzła sieci ASI", "options": [{"letter": "a", "text": "jest ramką o stalej długości"}, {"letter": "b", "text": "służy do przesyłania danych o długości nie większej niz 4 bity:"}, {"letter": "c", "text": "składa się z 4-bitowych nib"}, {"letter": "d", "text": "zawiera bil kontrolny parzystości"}], "correct": ["a", "b", "d"], "certain_wrong": [], "pewniaki": [], "notes": "2pkt za a) b) d)"}, {"id": 34, "question": "Cykliczna suma kontrolna (CRC) lub kontrola parzystości nie jest stosowana w sieci", "options": [{"letter": "a", "text": "MODBUS"}, {"letter": "b", "text": "CAN"}, {"letter": "c", "text": "AS-i"}, {"letter": "d", "text": "PROFIBUS DP"}, {"letter": "e", "text": "HART"}], "correct": [], "certain_wrong": [], "pewniaki": [], "notes": "2 pkt za brak odpowiedzi – żadna odpowiedź nie jest poprawna"}, {"id": 35, "question": "Arbitraz typu CSMA/CA (nieniszczący) nie jest stosowany do rozstrzygania kolizji w sieciach", "options": [{"letter": "a", "text": "HART"}, {"letter": "b", "text": "MODBUS.RTU"}, {"letter": "c", "text": "Ethernet"}, {"letter": "d", "text": "PROFIBUS PA"}, {"letter": "e", "text": "AS-i"}], "correct": ["a", "b", "c", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": "za a) i e) 0,8 pkt więc jest 5 poprawnych odpowiedzi, więc wszystkie poprawne"}, {"id": 36, "question": "W strefach zagrożonych wybuchem nie stosuje się sieci CAN ze względu na fakt, ze", "options": [{"letter": "a", "text": "jest to sieć czteroprzewodowa,"}, {"letter": "b", "text": "jest to siec multimaster"}, {"letter": "c", "text": "jest to sieć, w której moc elektryczna sygnału jest zbyt wysoka"}, {"letter": "d", "text": "nieprawda. Sieć CAN jest stosowana w strefach zagrożonych wybuchem"}], "correct": ["c"], "certain_wrong": [], "pewniaki": [], "notes": "2 punkty za c):"}, {"id": 37, "question": "W strefie zagrożonej wybuchem w miejsce dotychczasowej sieci analogowej 4-20mA zastosowano sieć HART wymieniając urządzenia końcowe ale pozostawiono dotychczasowe kable. W tej sytuacji:", "options": [{"letter": "a", "text": "możliwe jest wykorzystanie starej bariery iskrobezpiecznej"}, {"letter": "b", "text": "trzeba wymienić bariere iskrobezpieczną na specjalnie skonstruowaną dla sieci HART"}, {"letter": "c", "text": "trzeba wymienić barierę iskrobezpieczną, ale tylko wtedy, gdy będzie wykorzystywana komunikacja cyfrowa w sieci HART"}, {"letter": "d", "text": "w przypadku sieci HART bariera w ogóle jest zbędna."}, {"letter": "e", "text": "W przypadku sieci HART bariera w ogóle jest zbędna -> wyzerowało"}], "correct": ["b", "c"], "certain_wrong": ["e"], "pewniaki": [], "notes": "2pkt za b)c)"}, {"id": 38, "question": "W strefie zagrożonej wybuchem zostały zastosowane węzły sieci Profibus PA 2pkt za c", "options": [{"letter": "a", "text": "sieć Profibus PA jest siecią multimaster i w ogóle nie wymaga mastera, ponieważ każdy węzeł sieci może pełnić rolę jednostki master"}, {"letter": "b", "text": "jednostka typu master tej sieci musi być zlokalizowana w tej strefie zagrożonej wybuchem"}, {"letter": "c", "text": "jednostka typu master tej sieci musi być zlokalizowana poza strefą zagrożoną wybuchem"}, {"letter": "d", "text": "wystarczy, aby jednostka master i sieć byly separowane przez użycie bariery iskrobezpiecznej obojętnie gdzie zlokalizowanej -> wyzerowało"}], "correct": ["c"], "certain_wrong": ["d"], "pewniaki": [], "notes": ""}, {"id": 39, "question": "Proszę zarekomendować tylko jedną sieć, ale najlepszą w zastosowaniu w instalacji do produkcji acetylenu", "options": [{"letter": "a", "text": "MODBUS RTU"}, {"letter": "b", "text": "AS-i"}, {"letter": "c", "text": "CAN"}, {"letter": "d", "text": "Profibus PA"}, {"letter": "e", "text": "Profibus DP"}], "correct": ["d"], "certain_wrong": [], "pewniaki": [], "notes": "2 punkty za d):"}, {"id": 40, "question": "Proszę zarekomendować tylko jedną sieć, ale najlepszą w zastosowaniu do zamykania pudełek opakowań do leków", "options": [{"letter": "a", "text": "AS-I"}, {"letter": "b", "text": "HART"}, {"letter": "c", "text": "Profibus PA0"}, {"letter": "d", "text": "Foundation Fieldbus"}], "correct": ["a"], "certain_wrong": [], "pewniaki": [], "notes": "2pkt za a)"}, {"id": 41, "question": "Arbitraż typu CSMA/CA (nieniszczący) nie jest stosowany do rozstrzygania kolizji w sieciach", "options": [{"letter": "a", "text": "HART"}, {"letter": "b", "text": "MODBUS.RTU"}, {"letter": "c", "text": "Ethernet"}, {"letter": "d", "text": "PROFIBUS PA"}, {"letter": "e", "text": "AS-i"}], "correct": ["a", "b", "c", "d", "e"], "certain_wrong": [], "pewniaki": [], "notes": "Wszystkie poprawne (0,8 pkt za a) i e))"}];
-let order = CARDS.map((_, i) => i);
-let current = 0;
-let flipped = false;
+let questions = [];
+let originalQuestions = [];
+let currentIndex = 0;
+let incorrectQuestions = [];
+let userAnswers = [];
+let correctAnswers = 0;
+let incorrectAnswers = 0;
+let totalAnswers = 0;
+let startTime = null;
+let timerInterval;
 
-const cardEl = document.getElementById('card');
-const frontEl = document.getElementById('front');
-const backEl = document.getElementById('back');
-const progressEl = document.getElementById('progress');
+document.getElementById('fileInput').addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-function renderFront(c) {
-  const opts = c.options.map(o =>
-    `<li><span class="letter">${o.letter.toUpperCase()})</span>${esc(o.text)}</li>`
-  ).join('');
-  return `
-    <div class="q-num">Pytanie ${c.id}</div>
-    <div class="question">${esc(c.question)}</div>
-    <ul class="options">${opts}</ul>
-    <div class="note">Kliknij, aby zobaczyć poprawne odpowiedzi</div>
-  `;
-}
-
-function renderBack(c) {
-  const pewniaki = new Set(c.pewniaki || []);
-  let correctHtml;
-  if (!c.correct || c.correct.length === 0) {
-    correctHtml = '<div class="empty-correct">Brak poprawnych odpowiedzi (nie zaznaczaj nic)</div>';
-  } else {
-    correctHtml = '<div class="correct-list">' + c.correct.map(letter => {
-      const opt = c.options.find(o => o.letter === letter);
-      if (!opt) return '';
-      const isPewniak = pewniaki.has(letter);
-      const tag = isPewniak
-        ? '<span class="tag tag-green">PRAWDOPODOBNIE</span>'
-        : '<span class="tag tag-blue">Poprawna</span>';
-      return `<div class="correct-item${isPewniak ? ' pewniak' : ''}">${tag}<strong>${letter.toUpperCase()})</strong> ${esc(opt.text)}</div>`;
-    }).join('') + '</div>';
-  }
-
-  let wrongHtml = '';
-  if (c.certain_wrong && c.certain_wrong.length > 0) {
-    const items = c.certain_wrong.map(letter => {
-      const opt = c.options.find(o => o.letter === letter);
-      return opt ? `<strong>${letter.toUpperCase()})</strong> ${esc(opt.text)}` : '';
-    }).filter(Boolean).join('<br>');
-    wrongHtml = `<div class="warning"><strong>Na pewno zła odpowiedź (wyzerowała zadanie):</strong>${items}</div>`;
-  }
-
-  const note = c.notes ? `<div class="note">${esc(c.notes)}</div>` : '';
-  return `
-    <div class="q-num">Pytanie ${c.id} – odpowiedzi</div>
-    <div class="label">Poprawne odpowiedzi</div>
-    ${correctHtml}
-    ${wrongHtml}
-    ${note}
-  `;
-}
-
-function show() {
-  const c = CARDS[order[current]];
-  frontEl.innerHTML = renderFront(c);
-  backEl.innerHTML = renderBack(c);
-  progressEl.textContent = `${current + 1} / ${order.length}`;
-  cardEl.classList.toggle('flipped', flipped);
-}
-
-function flip() {
-  flipped = !flipped;
-  cardEl.classList.toggle('flipped', flipped);
-}
-
-function go(delta) {
-  current = (current + delta + order.length) % order.length;
-  flipped = false;
-  show();
-}
-
-document.getElementById('flipBtn').addEventListener('click', flip);
-document.getElementById('prevBtn').addEventListener('click', () => go(-1));
-document.getElementById('nextBtn').addEventListener('click', () => go(1));
-cardEl.addEventListener('click', flip);
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    questions = parseQuestions(e.target.result);
+    originalQuestions = structuredClone(questions);
+    currentIndex = 0;
+    incorrectQuestions = [];
+    userAnswers = [];
+    correctAnswers = 0;
+    incorrectAnswers = 0;
+    totalAnswers = 0;
+    document.getElementById('shuffleBtn').style.display = 'inline';
+    document.getElementById('exportBtn').style.display = 'inline';
+    document.getElementById('stats').style.display = 'inline';
+    document.getElementById('totalCount').textContent = questions.length;
+    showQuestion();
+  };
+  reader.readAsText(file);
+});
 
 document.getElementById('shuffleBtn').addEventListener('click', () => {
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
+  questions = shuffleArray(questions);
+  currentIndex = 0;
+  incorrectQuestions = [];
+  userAnswers = [];
+  correctAnswers = 0;
+  incorrectAnswers = 0;
+  totalAnswers = 0;
+  showQuestion();
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  downloadQuizFile(originalQuestions, 'caly_quiz.txt');
+});
+
+function shuffleArray(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function parseQuestions(text) {
+  const lines = text.split(/\r?\n/);
+  const questions = [];
+  let current = null;
+
+  lines.forEach(line => {
+    if (/^\d+\.\s/.test(line)) {
+      if (current) questions.push(current);
+      current = { text: line.replace(/^\d+\.\s/, ''), answers: [], comments: [] };
+    } else if (/^\*[a-z]\.\s/.test(line)) {
+      const match = line.substring(1).match(/^([a-z])\.\s(.*)/);
+      if (match) {
+        current.answers.push({ text: match[2], correct: true });
+      }
+    } else if (/^[a-z]\.\s/.test(line)) {
+      const match = line.match(/^([a-z])\.\s(.*)/);
+      if (match) {
+        current.answers.push({ text: match[2], correct: false });
+      }
+    } else if (/^#/.test(line)) {
+      current.comments.push(line.substring(1).trim());
+    } else if (line.trim()) {
+      const last = current?.answers.at(-1);
+      if (last) {
+        last.text += " " + line.trim();
+      } else if (current?.comments.length) {
+        current.comments[current.comments.length - 1] += " " + line.trim();
+      }
+    }
+  });
+
+  if (current) questions.push(current);
+  return questions;
+}
+
+function showQuestion() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  if (currentIndex >= questions.length) {
+    clearInterval(timerInterval);
+    showSummary();
+    return;
   }
-  current = 0; flipped = false; show();
+
+  const q = structuredClone(questions[currentIndex]);
+  q.answers = shuffleArray(q.answers);
+
+  const div = document.createElement('div');
+  div.className = 'question';
+  div.innerHTML = `<strong>${currentIndex + 1}.</strong> ${q.text}`;
+
+  const answersDiv = document.createElement('div');
+  answersDiv.className = 'answers';
+
+  q.answers.forEach((ans, i) => {
+    const label = document.createElement('label');
+    label.innerHTML = `
+      <span class="answer-icon"><input type="checkbox" name="answer" value="${i}"></span>${ans.text}
+    `;
+    answersDiv.appendChild(label);
+  });
+
+  const submitBtn = document.createElement('button');
+  submitBtn.textContent = 'Zatwierdź odpowiedź';
+  submitBtn.onclick = () => {
+    if (!startTime) startTimer();
+    if(checkAnswer(q) != "not_selected") {
+      submitBtn.disabled = true;
+    }
+  };
+
+  container.appendChild(div);
+  container.appendChild(answersDiv);
+  container.appendChild(submitBtn);
+}
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsedTime = Date.now() - startTime;
+    const hours = String(Math.floor(elapsedTime / 3600000)).padStart(2, '0');
+    const minutes = String(Math.floor((elapsedTime % 3600000) / 60000)).padStart(2, '0');
+    const seconds = String(Math.floor((elapsedTime % 60000) / 1000)).padStart(2, '0');
+    document.getElementById('time').textContent = `${hours}:${minutes}:${seconds}`;
+  }, 1000);
+}
+
+function checkAnswer(question) {
+  const selected = document.querySelectorAll('input[name="answer"]:checked');
+
+  if (selected.length === 0) {
+    alert("Zaznacz przynajmniej jedną odpowiedź!");
+    return "not_selected";
+  }
+
+  let selectedIndices = Array.from(selected).map(s => parseInt(s.value));
+  let correctIndices = question.answers.map((a, i) => a.correct ? i : -1).filter(i => i !== -1);
+
+  selectedIndices.sort((a, b) => a - b);
+  correctIndices.sort((a, b) => a - b);
+  const isCorrect = JSON.stringify(selectedIndices) === JSON.stringify(correctIndices);
+
+  if (isCorrect) correctAnswers++;
+  else incorrectAnswers++;
+
+  totalAnswers++;
+
+  userAnswers.push({ question, selectedIndices, correctIndices });
+
+  const container = document.getElementById('quizContainer');
+
+  // Kolorowanie odpowiedzi
+  const labels = document.querySelectorAll('.answers label');
+  labels.forEach((label, idx) => {
+    const wasSelected = selectedIndices.includes(idx);
+    const shouldBeSelected = correctIndices.includes(idx);
+
+    const iconSpan = label.querySelector('.answer-icon');
+    const textContent = question.answers[idx].text;
+
+    if (wasSelected && shouldBeSelected) {
+      // Poprawnie zaznaczona
+      label.className = 'answer-correct';
+      iconSpan.innerHTML = '✅';
+    } else if (wasSelected && !shouldBeSelected) {
+      // Błędnie zaznaczona
+      label.className = 'answer-wrong';
+      iconSpan.innerHTML = '❌';
+    } else if (!wasSelected && shouldBeSelected) {
+      // Pominięta poprawna odpowiedź
+      label.className = 'answer-missed';
+      iconSpan.innerHTML = '⚠️';
+    } else {
+      // Poprawnie niezaznaczona
+      label.className = 'answer-neutral';
+      iconSpan.innerHTML = '&nbsp;&nbsp;';
+    }
+  });
+
+  const result = document.createElement('div');
+
+  if (isCorrect) {
+    result.innerHTML = `<p class="correct">✅ Odpowiedź w pełni poprawna!</p>`;
+  } else {
+    result.innerHTML = `<p class="wrong">❌ Odpowiedź niepoprawna. Sprawdź zaznaczone odpowiedzi powyżej.</p>`;
+  }
+
+  if (!isCorrect) {
+    incorrectQuestions.push(question);
+  }
+
+  if (question.comments.length) {
+    const comments = document.createElement('div');
+    comments.className = 'comments';
+    comments.innerHTML = question.comments.map(c => `🛈 ${c}`).join('<br>');
+    result.appendChild(comments);
+  }
+
+  container.appendChild(result);
+
+  // Zablokowanie odpowiedzi po zatwierdzeniu
+  const inputs = document.querySelectorAll('input[name="answer"]');
+  inputs.forEach(input => input.disabled = true);
+
+  document.getElementById('nextBtn').style.display = 'inline';
+
+  // Aktualizacja liczników
+  document.getElementById('correctCount').textContent = correctAnswers;
+  document.getElementById('incorrectCount').textContent = incorrectAnswers;
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentIndex++;
+  showQuestion();
 });
 
-document.getElementById('resetBtn').addEventListener('click', () => {
-  order = CARDS.map((_, i) => i);
-  current = 0; flipped = false; show();
+function showSummary() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = `<h2>Podsumowanie</h2>`;
+
+  userAnswers.forEach((entry, i) => {
+    const q = entry.question;
+    const div = document.createElement('div');
+    div.className = 'question';
+
+    const selectedIndicesStr = JSON.stringify(entry.selectedIndices.sort((a, b) => a - b));
+    const correctIndicesStr = JSON.stringify(entry.correctIndices.sort((a, b) => a - b));
+    const wasCorrect = selectedIndicesStr === correctIndicesStr;
+
+    div.innerHTML = `<strong>${i + 1}.</strong> ${q.text}`;
+
+    const answerSection = document.createElement('div');
+
+    // Twoja odpowiedź
+    const yourAnswerDiv = document.createElement('div');
+    yourAnswerDiv.innerHTML = '<p class="' + (wasCorrect ? 'correct' : 'wrong') + '">Twoja odpowiedź:</p>';
+    entry.selectedIndices.forEach(idx => {
+      const ansDiv = document.createElement('div');
+      ansDiv.textContent = `• ${q.answers[idx].text}`;
+      yourAnswerDiv.appendChild(ansDiv);
+    });
+    answerSection.appendChild(yourAnswerDiv);
+
+    // Poprawna odpowiedź (jeśli źle)
+    if (!wasCorrect) {
+      const correctAnswerDiv = document.createElement('div');
+      correctAnswerDiv.innerHTML = '<p class="correct">Poprawna odpowiedź:</p>';
+      entry.correctIndices.forEach(idx => {
+        const ansDiv = document.createElement('div');
+        ansDiv.textContent = `• ${q.answers[idx].text}`;
+        correctAnswerDiv.appendChild(ansDiv);
+      });
+      answerSection.appendChild(correctAnswerDiv);
+    } else {
+      const correctMsg = document.createElement('p');
+      correctMsg.className = 'correct';
+      correctMsg.textContent = 'Poprawnie!';
+      answerSection.appendChild(correctMsg);
+    }
+
+    div.appendChild(answerSection);
+    container.appendChild(div);
+  });
+
+  if (incorrectQuestions.length > 0) {
+    document.getElementById('downloadBtn').style.display = 'inline';
+  }
+}
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  downloadQuizFile(incorrectQuestions, 'bledne_pytania.quiz');
 });
 
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space') { e.preventDefault(); flip(); }
-  if (e.code === 'ArrowRight') go(1);
-  if (e.code === 'ArrowLeft') go(-1);
-});
+function downloadQuizFile(questionList, filename) {
+  const lines = [];
+  questionList.forEach((q, i) => {
+    lines.push(`${i + 1}. ${q.text}`);
+    q.answers.forEach((ans, index) => {
+      const letter = String.fromCharCode('a'.charCodeAt(0) + index);
+      lines.push(`${ans.correct ? '*' : ''}${letter}. ${ans.text}`);
+    });
+    q.comments.forEach(c => lines.push(`#${c}`));
+    lines.push('');
+  });
 
-show();
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
 </script>
+
 </body>
 </html>
