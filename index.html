@@ -2,44 +2,337 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz offline – krok po kroku</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
-    .question { margin-bottom: 20px; }
-    .answers label { display: block; margin: 5px 0; padding: 5px; min-height: 24px; }
-    .correct { color: green; font-weight: bold; }
-    .wrong { color: red; font-weight: bold; }
-    .answer-correct { background-color: #d4edda; border-left: 4px solid #28a745; }
-    .answer-wrong { background-color: #f8d7da; border-left: 4px solid #dc3545; }
-    .answer-missed { background-color: #fff3cd; border-left: 4px solid #ffc107; }
-    .answer-neutral { border-left: 4px solid transparent; }
-    .answer-icon { display: inline-block; width: 24px; }
-    input[type="checkbox"] { margin-right: 5px; }
-    .correct-list { margin-top: 10px; }
-    .correct-list div { margin: 3px 0; }
-    .comments { font-size: 0.9em; color: #666; margin-top: 10px; }
-    button { margin: 10px 5px 0 0; }
-    .stats { margin-top: 20px; }
-    #time { font-size: 1.2em; font-weight: bold; }
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+      --danger: #dc2626;
+      --danger-bg: #fee2e2;
+      --warning: #d97706;
+      --warning-bg: #fef3c7;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: var(--text);
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      margin: 0 0 24px;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .file-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .file-label:hover { background: #bfdbfe; }
+
+    #fileInput { display: none; }
+
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+
+    button:active:not(:disabled) { transform: scale(0.98); }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) { background: #e2e8f0; }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-success:hover:not(:disabled) { background: #15803d; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-item {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .stat-value.time { font-variant-numeric: tabular-nums; }
+
+    .stat-correct .stat-value { color: var(--success); }
+    .stat-incorrect .stat-value { color: var(--danger); }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .question-number {
+      flex-shrink: 0;
+      background: var(--primary);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      flex: 1;
+      padding-top: 6px;
+    }
+
+    .answers { margin-bottom: 20px; }
+
+    .answers label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 8px 0;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .answers label:hover:not(.locked) {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+
+    .answers label.locked { cursor: default; }
+
+    .answers input[type="checkbox"] {
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .answer-icon {
+      display: inline-block;
+      width: 24px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .correct { color: var(--success); font-weight: 600; }
+    .wrong { color: var(--danger); font-weight: 600; }
+
+    .answer-correct { background: var(--success-bg); border-color: #86efac; }
+    .answer-wrong { background: var(--danger-bg); border-color: #fca5a5; }
+    .answer-missed { background: var(--warning-bg); border-color: #fcd34d; }
+    .answer-neutral { border-color: var(--border); }
+
+    .comments {
+      font-size: 0.9em;
+      color: var(--text-muted);
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .nav-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .result-box {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 8px;
+    }
+
+    .result-box.success { background: var(--success-bg); }
+    .result-box.error { background: var(--danger-bg); }
+
+    .summary-item {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-item:last-child { border-bottom: none; }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
 <h1>Quiz offline</h1>
-<input type="file" id="fileInput" accept=".quiz,.txt"><br><br>
-<button id="shuffleBtn" style="display:none">🔀 Pomieszaj pytania</button>
-<button id="exportBtn" style="display:none">📄 Pobierz cały quiz jako .txt</button>
+<p class="subtitle">Wczytaj plik .quiz lub .txt i rozwiązuj pytania krok po kroku.</p>
 
-<div id="stats" class="stats">
-  <div>Poprawne: <span id="correctCount">0</span></div>
-  <div>Niepoprawne: <span id="incorrectCount">0</span></div>
-  <div>Wszystkie: <span id="totalCount">0</span></div>
-  <div>Czas: <span id="time">00:00:00</span></div>
+<div class="card">
+  <div class="toolbar">
+    <label class="file-label" for="fileInput">📂 Wczytaj plik quizu</label>
+    <input type="file" id="fileInput" accept=".quiz,.txt">
+    <button id="shuffleBtn" class="btn btn-secondary hidden">🔀 Pomieszaj pytania</button>
+    <button id="exportBtn" class="btn btn-secondary hidden">📄 Pobierz cały quiz</button>
+  </div>
 </div>
 
-<div id="quizContainer"></div>
-<button id="nextBtn" style="display:none">Następne pytanie</button>
-<button id="downloadBtn" style="display:none">📥 Pobierz pytania, które zrobiłeś źle</button>
+<div id="stats" class="card stats hidden">
+  <div class="stat-item stat-correct">
+    <div class="stat-label">Poprawne</div>
+    <div class="stat-value" id="correctCount">0</div>
+  </div>
+  <div class="stat-item stat-incorrect">
+    <div class="stat-label">Niepoprawne</div>
+    <div class="stat-value" id="incorrectCount">0</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Wszystkie</div>
+    <div class="stat-value" id="totalCount">0</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Czas</div>
+    <div class="stat-value time" id="time">00:00:00</div>
+  </div>
+</div>
+
+<div id="quizWrapper" class="card hidden">
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div id="quizContainer"></div>
+  <div class="action-row">
+    <div class="nav-row">
+      <button id="prevBtn" class="btn btn-secondary">← Poprzednie pytanie</button>
+      <button id="navNextBtn" class="btn btn-secondary">Następne pytanie →</button>
+    </div>
+    <button id="submitBtn" class="btn btn-primary hidden">Zatwierdź odpowiedź</button>
+  </div>
+</div>
+
+<button id="downloadBtn" class="btn btn-success hidden" style="margin-top: 12px;">📥 Pobierz pytania, które zrobiłeś źle</button>
 
 <script>
 let questions = [];
@@ -47,9 +340,9 @@ let originalQuestions = [];
 let currentIndex = 0;
 let incorrectQuestions = [];
 let userAnswers = [];
+let shuffledQuestions = [];
 let correctAnswers = 0;
 let incorrectAnswers = 0;
-let totalAnswers = 0;
 let startTime = null;
 let timerInterval;
 
@@ -61,15 +354,11 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
   reader.onload = function(e) {
     questions = parseQuestions(e.target.result);
     originalQuestions = structuredClone(questions);
-    currentIndex = 0;
-    incorrectQuestions = [];
-    userAnswers = [];
-    correctAnswers = 0;
-    incorrectAnswers = 0;
-    totalAnswers = 0;
-    document.getElementById('shuffleBtn').style.display = 'inline';
-    document.getElementById('exportBtn').style.display = 'inline';
-    document.getElementById('stats').style.display = 'inline';
+    resetQuiz();
+    document.getElementById('shuffleBtn').classList.remove('hidden');
+    document.getElementById('exportBtn').classList.remove('hidden');
+    document.getElementById('stats').classList.remove('hidden');
+    document.getElementById('quizWrapper').classList.remove('hidden');
     document.getElementById('totalCount').textContent = questions.length;
     showQuestion();
   };
@@ -78,18 +367,53 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
 
 document.getElementById('shuffleBtn').addEventListener('click', () => {
   questions = shuffleArray(questions);
-  currentIndex = 0;
-  incorrectQuestions = [];
-  userAnswers = [];
-  correctAnswers = 0;
-  incorrectAnswers = 0;
-  totalAnswers = 0;
+  resetQuiz();
   showQuestion();
 });
 
 document.getElementById('exportBtn').addEventListener('click', () => {
   downloadQuizFile(originalQuestions, 'caly_quiz.txt');
 });
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentIndex > 0) {
+    currentIndex--;
+    showQuestion();
+  }
+});
+
+document.getElementById('navNextBtn').addEventListener('click', () => {
+  if (currentIndex < questions.length - 1) {
+    currentIndex++;
+    showQuestion();
+  } else if (allAnswered()) {
+    currentIndex = questions.length;
+    showQuestion();
+  }
+});
+
+function resetQuiz() {
+  currentIndex = 0;
+  incorrectQuestions = [];
+  userAnswers = new Array(questions.length).fill(null);
+  shuffledQuestions = questions.map(q => {
+    const copy = structuredClone(q);
+    copy.answers = shuffleArray(copy.answers);
+    return copy;
+  });
+  correctAnswers = 0;
+  incorrectAnswers = 0;
+  startTime = null;
+  clearInterval(timerInterval);
+  document.getElementById('time').textContent = '00:00:00';
+  document.getElementById('correctCount').textContent = '0';
+  document.getElementById('incorrectCount').textContent = '0';
+  document.getElementById('downloadBtn').classList.add('hidden');
+}
+
+function allAnswered() {
+  return userAnswers.every(a => a !== null);
+}
 
 function shuffleArray(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -130,47 +454,78 @@ function parseQuestions(text) {
   return questions;
 }
 
+function updateProgress() {
+  const answered = userAnswers.filter(a => a !== null).length;
+  const pct = questions.length ? (answered / questions.length) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function updateNavButtons() {
+  document.getElementById('prevBtn').disabled = currentIndex === 0;
+  const isLast = currentIndex === questions.length - 1;
+  const answered = userAnswers[currentIndex] !== null;
+  document.getElementById('navNextBtn').disabled = isLast && !answered;
+  document.getElementById('navNextBtn').textContent = isLast && allAnswered()
+    ? 'Zobacz podsumowanie →'
+    : 'Następne pytanie →';
+}
+
 function showQuestion() {
   const container = document.getElementById('quizContainer');
   container.innerHTML = '';
-  document.getElementById('nextBtn').style.display = 'none';
+  const submitBtn = document.getElementById('submitBtn');
 
   if (currentIndex >= questions.length) {
     clearInterval(timerInterval);
+    document.getElementById('quizWrapper').classList.add('hidden');
     showSummary();
     return;
   }
 
-  const q = structuredClone(questions[currentIndex]);
-  q.answers = shuffleArray(q.answers);
+  const q = shuffledQuestions[currentIndex];
+  const saved = userAnswers[currentIndex];
 
-  const div = document.createElement('div');
-  div.className = 'question';
-  div.innerHTML = `<strong>${currentIndex + 1}.</strong> ${q.text}`;
+  const header = document.createElement('div');
+  header.className = 'question-header';
+  header.innerHTML = `
+    <div class="question-number">${currentIndex + 1}</div>
+    <div class="question-text">${q.text}</div>
+  `;
 
   const answersDiv = document.createElement('div');
   answersDiv.className = 'answers';
 
   q.answers.forEach((ans, i) => {
     const label = document.createElement('label');
+    const checked = saved ? saved.selectedIndices.includes(i) : false;
     label.innerHTML = `
-      <span class="answer-icon"><input type="checkbox" name="answer" value="${i}"></span>${ans.text}
+      <span class="answer-icon"><input type="checkbox" name="answer" value="${i}"${checked ? ' checked' : ''}></span>
+      <span class="answer-text">${ans.text}</span>
     `;
     answersDiv.appendChild(label);
   });
 
-  const submitBtn = document.createElement('button');
-  submitBtn.textContent = 'Zatwierdź odpowiedź';
-  submitBtn.onclick = () => {
-    if (!startTime) startTimer();
-    if(checkAnswer(q) != "not_selected") {
-      submitBtn.disabled = true;
-    }
-  };
-
-  container.appendChild(div);
+  container.appendChild(header);
   container.appendChild(answersDiv);
-  container.appendChild(submitBtn);
+
+  if (saved) {
+    renderAnswerResult(q, saved);
+    submitBtn.classList.add('hidden');
+  } else {
+    submitBtn.classList.remove('hidden');
+    submitBtn.disabled = false;
+    submitBtn.onclick = () => {
+      if (!startTime) startTimer();
+      if (checkAnswer(q) !== 'not_selected') {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('hidden');
+        updateNavButtons();
+      }
+    };
+  }
+
+  updateProgress();
+  updateNavButtons();
 }
 
 function startTimer() {
@@ -188,64 +543,85 @@ function checkAnswer(question) {
   const selected = document.querySelectorAll('input[name="answer"]:checked');
 
   if (selected.length === 0) {
-    alert("Zaznacz przynajmniej jedną odpowiedź!");
-    return "not_selected";
+    alert('Zaznacz przynajmniej jedną odpowiedź!');
+    return 'not_selected';
   }
 
-  let selectedIndices = Array.from(selected).map(s => parseInt(s.value));
-  let correctIndices = question.answers.map((a, i) => a.correct ? i : -1).filter(i => i !== -1);
+  const selectedIndices = Array.from(selected).map(s => parseInt(s.value));
+  const correctIndices = question.answers.map((a, i) => a.correct ? i : -1).filter(i => i !== -1);
 
   selectedIndices.sort((a, b) => a - b);
   correctIndices.sort((a, b) => a - b);
   const isCorrect = JSON.stringify(selectedIndices) === JSON.stringify(correctIndices);
 
+  const prev = userAnswers[currentIndex];
+  if (prev) {
+    if (prev.isCorrect) correctAnswers--;
+    else incorrectAnswers--;
+    const idx = incorrectQuestions.indexOf(prev.question);
+    if (idx !== -1) incorrectQuestions.splice(idx, 1);
+  }
+
   if (isCorrect) correctAnswers++;
   else incorrectAnswers++;
 
-  totalAnswers++;
+  const entry = {
+    question,
+    selectedIndices: [...selectedIndices],
+    correctIndices: [...correctIndices],
+    isCorrect
+  };
+  userAnswers[currentIndex] = entry;
 
-  userAnswers.push({ question, selectedIndices, correctIndices });
+  if (!isCorrect) {
+    incorrectQuestions.push(question);
+  }
 
+  renderAnswerResult(question, entry);
+
+  document.getElementById('correctCount').textContent = correctAnswers;
+  document.getElementById('incorrectCount').textContent = incorrectAnswers;
+  updateProgress();
+
+  return 'ok';
+}
+
+function renderAnswerResult(question, entry) {
+  const { selectedIndices, correctIndices, isCorrect } = entry;
   const container = document.getElementById('quizContainer');
 
-  // Kolorowanie odpowiedzi
-  const labels = document.querySelectorAll('.answers label');
+  const labels = container.querySelectorAll('.answers label');
   labels.forEach((label, idx) => {
+    label.classList.add('locked');
     const wasSelected = selectedIndices.includes(idx);
     const shouldBeSelected = correctIndices.includes(idx);
-
     const iconSpan = label.querySelector('.answer-icon');
-    const textContent = question.answers[idx].text;
 
     if (wasSelected && shouldBeSelected) {
-      // Poprawnie zaznaczona
-      label.className = 'answer-correct';
+      label.className = 'answer-correct locked';
       iconSpan.innerHTML = '✅';
     } else if (wasSelected && !shouldBeSelected) {
-      // Błędnie zaznaczona
-      label.className = 'answer-wrong';
+      label.className = 'answer-wrong locked';
       iconSpan.innerHTML = '❌';
     } else if (!wasSelected && shouldBeSelected) {
-      // Pominięta poprawna odpowiedź
-      label.className = 'answer-missed';
+      label.className = 'answer-missed locked';
       iconSpan.innerHTML = '⚠️';
     } else {
-      // Poprawnie niezaznaczona
-      label.className = 'answer-neutral';
+      label.className = 'answer-neutral locked';
       iconSpan.innerHTML = '&nbsp;&nbsp;';
     }
   });
 
+  const oldResult = container.querySelector('.result-box');
+  if (oldResult) oldResult.remove();
+
   const result = document.createElement('div');
+  result.className = 'result-box ' + (isCorrect ? 'success' : 'error');
 
   if (isCorrect) {
-    result.innerHTML = `<p class="correct">✅ Odpowiedź w pełni poprawna!</p>`;
+    result.innerHTML = '<p class="correct">✅ Odpowiedź w pełni poprawna!</p>';
   } else {
-    result.innerHTML = `<p class="wrong">❌ Odpowiedź niepoprawna. Sprawdź zaznaczone odpowiedzi powyżej.</p>`;
-  }
-
-  if (!isCorrect) {
-    incorrectQuestions.push(question);
+    result.innerHTML = '<p class="wrong">❌ Odpowiedź niepoprawna. Sprawdź zaznaczone odpowiedzi powyżej.</p>';
   }
 
   if (question.comments.length) {
@@ -257,40 +633,27 @@ function checkAnswer(question) {
 
   container.appendChild(result);
 
-  // Zablokowanie odpowiedzi po zatwierdzeniu
-  const inputs = document.querySelectorAll('input[name="answer"]');
+  const inputs = container.querySelectorAll('input[name="answer"]');
   inputs.forEach(input => input.disabled = true);
-
-  document.getElementById('nextBtn').style.display = 'inline';
-
-  // Aktualizacja liczników
-  document.getElementById('correctCount').textContent = correctAnswers;
-  document.getElementById('incorrectCount').textContent = incorrectAnswers;
 }
 
-document.getElementById('nextBtn').addEventListener('click', () => {
-  currentIndex++;
-  showQuestion();
-});
-
 function showSummary() {
-  const container = document.getElementById('quizContainer');
-  container.innerHTML = `<h2>Podsumowanie</h2>`;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'card';
+  wrapper.innerHTML = '<h2 style="margin-top:0">Podsumowanie</h2>';
 
   userAnswers.forEach((entry, i) => {
+    if (!entry) return;
     const q = entry.question;
     const div = document.createElement('div');
-    div.className = 'question';
+    div.className = 'summary-item';
 
-    const selectedIndicesStr = JSON.stringify(entry.selectedIndices.sort((a, b) => a - b));
-    const correctIndicesStr = JSON.stringify(entry.correctIndices.sort((a, b) => a - b));
-    const wasCorrect = selectedIndicesStr === correctIndicesStr;
+    const wasCorrect = entry.isCorrect;
 
     div.innerHTML = `<strong>${i + 1}.</strong> ${q.text}`;
 
     const answerSection = document.createElement('div');
 
-    // Twoja odpowiedź
     const yourAnswerDiv = document.createElement('div');
     yourAnswerDiv.innerHTML = '<p class="' + (wasCorrect ? 'correct' : 'wrong') + '">Twoja odpowiedź:</p>';
     entry.selectedIndices.forEach(idx => {
@@ -300,7 +663,6 @@ function showSummary() {
     });
     answerSection.appendChild(yourAnswerDiv);
 
-    // Poprawna odpowiedź (jeśli źle)
     if (!wasCorrect) {
       const correctAnswerDiv = document.createElement('div');
       correctAnswerDiv.innerHTML = '<p class="correct">Poprawna odpowiedź:</p>';
@@ -318,11 +680,13 @@ function showSummary() {
     }
 
     div.appendChild(answerSection);
-    container.appendChild(div);
+    wrapper.appendChild(div);
   });
 
+  document.body.insertBefore(wrapper, document.getElementById('downloadBtn'));
+
   if (incorrectQuestions.length > 0) {
-    document.getElementById('downloadBtn').style.display = 'inline';
+    document.getElementById('downloadBtn').classList.remove('hidden');
   }
 }
 
